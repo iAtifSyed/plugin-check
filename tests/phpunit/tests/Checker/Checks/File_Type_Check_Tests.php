@@ -139,19 +139,19 @@ class File_Type_Check_Tests extends WP_UnitTestCase {
 		$check = new File_Type_Check();
 
 		// Use reflection to make protected method accessible.
-		$reflection       = new ReflectionClass( $check );
-		$checkFilesMethod = $reflection->getMethod( 'look_for_badly_named_files' );
-		$checkFilesMethod->setAccessible( true );
+		$reflection         = new ReflectionClass( $check );
+		$check_files_method = $reflection->getMethod( 'look_for_badly_named_files' );
+		$check_files_method->setAccessible( true );
 
 		// Define the custom file list with duplicate names as they would appear in a plugin directory.
-		$customFiles = array(
+		$custom_files = array(
 			UNIT_TESTS_PLUGIN_DIR . 'test-plugin-file-type-badly-named-files-errors/custom-file.php',
 			UNIT_TESTS_PLUGIN_DIR . 'test-plugin-file-type-badly-named-files-errors/Custom-File.php',
 			UNIT_TESTS_PLUGIN_DIR . 'test-plugin-file-type-badly-named-files-errors/custom-FILE.php',
 		);
 
 		// Invoke method with the Check_Result instance and custom file list.
-		$result = $checkFilesMethod->invoke( $check, $check_result, $customFiles );
+		$result = $check_files_method->invoke( $check, $check_result, $custom_files );
 
 		$errors = $check_result->get_errors();
 
