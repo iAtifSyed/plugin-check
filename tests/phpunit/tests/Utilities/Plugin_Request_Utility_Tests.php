@@ -11,6 +11,7 @@ use WordPress\Plugin_Check\Checker\Check_Result;
 use WordPress\Plugin_Check\Checker\Checks;
 use WordPress\Plugin_Check\Checker\Checks\General\I18n_Usage_Check;
 use WordPress\Plugin_Check\Checker\CLI_Runner;
+use WordPress\Plugin_Check\Checker\Runtime_Environment_Setup;
 use WordPress\Plugin_Check\Test_Data\Runtime_Check;
 use WordPress\Plugin_Check\Test_Utils\Traits\With_Mock_Filesystem;
 use WordPress\Plugin_Check\Utilities\Plugin_Request_Utility;
@@ -19,10 +20,21 @@ class Plugin_Request_Utility_Tests extends WP_UnitTestCase {
 
 	use With_Mock_Filesystem;
 
+	/**
+	 * Storage for preparation cleanups that need to be run after a test.
+	 *
+	 * @var array
+	 */
+	private $cleanups = array();
+
 	public function tear_down() {
-		// Force reset the database prefix after runner prepare method called.
-		global $wpdb, $table_prefix;
-		$wpdb->set_prefix( $table_prefix );
+		if ( count( $this->cleanups ) > 0 ) {
+			$this->cleanups = array_reverse( $this->cleanups );
+			foreach ( $this->cleanups as $cleanup ) {
+				$cleanup();
+			}
+			$this->cleanups = array();
+		}
 		parent::tear_down();
 	}
 
@@ -61,6 +73,9 @@ class Plugin_Request_Utility_Tests extends WP_UnitTestCase {
 		);
 
 		Plugin_Request_Utility::initialize_runner();
+		$this->cleanups[] = function () {
+			Plugin_Request_Utility::destroy_runner();
+		};
 
 		do_action( 'muplugins_loaded' );
 
@@ -76,7 +91,20 @@ class Plugin_Request_Utility_Tests extends WP_UnitTestCase {
 		$_REQUEST['action'] = 'plugin_check_run_checks';
 		$_REQUEST['plugin'] = 'plugin-check';
 
+		/*
+		 * The runtime environment must be prepared manually before regular runtime preparations.
+		 * This is necessary because in reality it happens in a separate AJAX request before.
+		 */
+		$runtime = new Runtime_Environment_Setup();
+		$runtime->set_up();
+		$this->cleanups[] = function () use ( $runtime ) {
+			$runtime->clean_up();
+		};
+
 		Plugin_Request_Utility::initialize_runner();
+		$this->cleanups[] = function () {
+			Plugin_Request_Utility::destroy_runner();
+		};
 
 		do_action( 'muplugins_loaded' );
 
@@ -92,7 +120,7 @@ class Plugin_Request_Utility_Tests extends WP_UnitTestCase {
 	public function test_destroy_runner_with_cli() {
 		define( 'WP_CLI', true );
 
-		global $wpdb, $table_prefix, $wp_actions;
+		global $wp_actions;
 
 		$this->set_up_mock_filesystem();
 
@@ -117,6 +145,9 @@ class Plugin_Request_Utility_Tests extends WP_UnitTestCase {
 		unset( $wp_actions['muplugins_loaded'] );
 
 		Plugin_Request_Utility::initialize_runner();
+		$this->cleanups[] = function () {
+			Plugin_Request_Utility::destroy_runner();
+		};
 
 		do_action( 'muplugins_loaded' );
 
@@ -131,7 +162,6 @@ class Plugin_Request_Utility_Tests extends WP_UnitTestCase {
 
 		unset( $_SERVER['argv'] );
 		$wp_actions['muplugins_loaded'] = $muplugins_loaded;
-		$wpdb->set_prefix( $table_prefix );
 
 		$this->assertTrue( $prepared );
 		$this->assertTrue( $cleanup );
@@ -139,7 +169,7 @@ class Plugin_Request_Utility_Tests extends WP_UnitTestCase {
 	}
 
 	public function test_destroy_runner_with_ajax() {
-		global $wpdb, $table_prefix, $wp_actions;
+		global $wp_actions;
 
 		$this->set_up_mock_filesystem();
 
@@ -147,6 +177,16 @@ class Plugin_Request_Utility_Tests extends WP_UnitTestCase {
 		$_REQUEST['action'] = 'plugin_check_run_checks';
 		$_REQUEST['plugin'] = 'plugin-check';
 		$_REQUEST['checks'] = array( 'runtime_check' );
+
+		/*
+		 * The runtime environment must be prepared manually before regular runtime preparations.
+		 * This is necessary because in reality it happens in a separate AJAX request before.
+		 */
+		$runtime = new Runtime_Environment_Setup();
+		$runtime->set_up();
+		$this->cleanups[] = function () use ( $runtime ) {
+			$runtime->clean_up();
+		};
 
 		add_filter(
 			'wp_plugin_check_checks',
@@ -161,6 +201,9 @@ class Plugin_Request_Utility_Tests extends WP_UnitTestCase {
 		unset( $wp_actions['muplugins_loaded'] );
 
 		Plugin_Request_Utility::initialize_runner();
+		$this->cleanups[] = function () {
+			Plugin_Request_Utility::destroy_runner();
+		};
 
 		do_action( 'muplugins_loaded' );
 
@@ -173,7 +216,6 @@ class Plugin_Request_Utility_Tests extends WP_UnitTestCase {
 		$cleanup = ! has_filter( 'option_active_plugins' );
 		$runner  = Plugin_Request_Utility::get_runner();
 
-		$wpdb->set_prefix( $table_prefix );
 		$wp_actions['muplugins_loaded'] = $muplugins_loaded;
 
 		$this->assertTrue( $prepared );
