@@ -51,11 +51,12 @@ jobs:
         - '7.4'
         - '8.0'
         - '8.1'
+        - '8.2'
         wordpress: [ 'latest' ]
         include:
           - php: '7.4'
             wordpress: '6.3'
-          - php: '8.2'
+          - php: '8.3'
             wordpress: 'latest'
             coverage: true
           - php: '8.3'
