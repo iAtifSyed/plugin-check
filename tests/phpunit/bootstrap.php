@@ -27,12 +27,9 @@ if ( false !== getenv( 'WP_TESTS_DIR' ) ) {
 
 require_once $_test_root . '/includes/functions.php';
 
-tests_add_filter(
-	'plugins_loaded',
-	static function (): void {
-		require_once TESTS_PLUGIN_DIR . '/plugin.php';
-	},
-	1
+// Force plugin to be active.
+$GLOBALS['wp_tests_options'] = array(
+	'active_plugins' => array( basename( TESTS_PLUGIN_DIR ) . '/plugin.php' ),
 );
 
 // Start up the WP testing environment.
