@@ -7,7 +7,7 @@
 
 use WordPress\Plugin_Check\Checker\Check_Context;
 use WordPress\Plugin_Check\Checker\Check_Result;
-use WordPress\Plugin_Check\Checker\Checks\Localhost_Check;
+use WordPress\Plugin_Check\Checker\Checks\Plugin_Repo\Localhost_Check;
 
 class Localhost_Check_Tests extends WP_UnitTestCase {
 
@@ -21,12 +21,11 @@ class Localhost_Check_Tests extends WP_UnitTestCase {
 		$errors = $check_result->get_errors();
 
 		$this->assertNotEmpty( $errors );
-		$this->assertArrayHasKey( 'load.php', $errors );
-		$this->assertEquals( 1, $check_result->get_error_count() );
+		$this->assertArrayNotHasKey( 'load.php', $errors ); // Localhost in comment should not be error.
+		$this->assertArrayHasKey( 'another.php', $errors );
 
-		$this->assertArrayHasKey( 0, $errors['load.php'] );
-		$this->assertArrayHasKey( 0, $errors['load.php'][0] );
-		$this->assertArrayHasKey( 'code', $errors['load.php'][0][0][0] );
-		$this->assertEquals( 'localhost_code_detected', $errors['load.php'][0][0][0]['code'] );
+		$this->assertCount( 1, wp_list_filter( $errors['another.php'][2][15], array( 'code' => 'PluginCheck.CodeAnalysis.Localhost.Found' ) ) );
+		$this->assertCount( 1, wp_list_filter( $errors['another.php'][3][15], array( 'code' => 'PluginCheck.CodeAnalysis.Localhost.Found' ) ) );
+		$this->assertCount( 1, wp_list_filter( $errors['another.php'][4][15], array( 'code' => 'PluginCheck.CodeAnalysis.Localhost.Found' ) ) );
 	}
 }

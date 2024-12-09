@@ -1,8 +1,8 @@
 === Plugin Check (PCP) ===
 
 Contributors:      wordpressdotorg
-Tested up to:      6.6
-Stable tag:        1.0.2
+Tested up to:      6.7
+Stable tag:        1.3.1
 License:           GPLv2 or later
 License URI:       https://www.gnu.org/licenses/gpl-2.0.html
 Tags:              plugin best practices, testing, accessibility, performance, security
@@ -20,6 +20,7 @@ The checks can be run either using the WP Admin user interface or WP-CLI:
 * To check a plugin using WP Admin, please navigate to the _Tools > Plugin Check_ menu. You need to be able to manage plugins on your site in order to access that screen.
 * To check a plugin using WP-CLI, please use the `wp plugin check` command. For example, to check the "Hello Dolly" plugin: `wp plugin check hello.php`
     * Note that by default when using WP-CLI, only static checks can be executed. In order to also include runtime checks, a workaround is currently necessary using the `--require` argument of WP-CLI, to manually load the `cli.php` file within the plugin checker directory before WordPress is loaded. For example: `wp plugin check hello.php --require=./wp-content/plugins/plugin-check/cli.php`
+    * You could use arbitrary path or URL to check a plugin. For example, to check a plugin from a URL: `wp plugin check https://example.com/plugin.zip` or to check a plugin from a path: `wp plugin check /path/to/plugin`
 
 The checks are grouped into several categories, so that you can customize which kinds of checks you would like to run on a plugin.
 
@@ -66,6 +67,81 @@ To be approved in the WordPress.org plugin directory, a plugin must typically pa
 In any case, passing the checks in this tool likely helps to achieve a smooth plugin review process, but is no guarantee that a plugin will be approved in the WordPress.org plugin directory.
 
 == Changelog ==
+
+= 1.3.1 =
+
+* Enhancement - Add version utilities.
+* Fix - Escape error messages.
+* Fix - Renamed error type to ERROR_LOW_SEVERITY and WARNING_LOW_SEVERITY.
+* Fix - Fix PHPCS checks on unwritable filesystems.
+
+= 1.3.0 =
+
+* Enhancement - Update disallowed domains for Plugin URI check.
+* Enhancement - Added new checks for Plugin Header fields: missing plugin description, missing plugin version and invalid plugin version.
+* Enhancement - New check for validation of donate link in the readme file.
+* Enhancement - Increased severity for wrong Plugin Requires.
+* Enhancement - Added check Restrict parse_str() without second argument.
+* Enhancement - New check for Disallow usage of HEREDOC and NOWDOC.
+* Enhancement - Added acronyms allowed in Trademark checks.
+* Enhancement - Added option in CLI to add low severity errors and warnings.
+* Enhancement - Change error type for License check error codes.
+* Enhancement - Always use prefixed tables during runtime check requests.
+* Enhancement - Created a new class for checking licenses.
+* Enhancement - Added support for MPL-2.0 license.
+* Enhancement - Implement gherkin linter in GH action.
+* Enhancement - Update check for Contributors in markdown readme files.
+* Enhancement - CLI: Fix confusing runtime environment setup order.
+* Enhancement - Allow custom checks to provide installed_paths.
+* Enhancement - Improved the use of localhost URLs in the Plugin.
+* Enhancement - Documented checks in the plugin.
+* Enhancement - Increased severity for Code obfuscation checks.
+* Enhancement - Diffentiate between no existent readme and default readme file.
+* Enhancement - Encourage developers to use native functions for loading images in templates.
+* Enhancement - Added a check for not allowing include libraries already in WordPress core.
+* Enhancement - Warning for usage of query_posts() in favor of WP_Query.
+* Fix - Fix for the local environment is set up before testing.
+* Fix - Fix addon checks not being executed when running runtime checks.
+* Fix - Allow `default` as a text domain in the text domain check.
+* Fix - Allow GitHub URLs in the Plugin URI field.
+* Fix - Don't flag Apache license. It's allowed in the WordPress.org plugin repository.
+* Fix - Removes the path before the plugin, so it won't affect to badly named files.
+
+= 1.2.0 =
+
+* Enhancement - Added a check for badly used names in files.
+* Enhancement - Increased severity for `BacktickOperator`, `DisallowShortOpenTag`, `DisallowAlternativePHPTags`, `RestrictedClasses`, and `RestrictedFunctions`.
+* Enhancement - Added security checks to the Plugin repository category.
+* Enhancement - Allowed `runtime-set` in code sniffer checks.
+* Enhancement - Changed warnings to errors in plugin header checks.
+* Enhancement - Detect forbidden plugin headers such as repository URIs in the Directory.
+* Enhancement - Added a new check for development functions that are not allowed in final plugins.
+* Enhancement - Created new images and icons for the plugin.
+* Enhancement - Introduced a slug argument in the CLI.
+* Enhancement - Added a check for discouraged PHP functions.
+* Enhancement - Added validation for Contributors in the readme file.
+* Enhancement - Added a warning for mismatched plugin names in the plugin header and readme file.
+* Enhancement - Checked for validation of Plugin Header fields: Name, Plugin URI, Description, Author URI, Requires at least, Requires PHP, and Requires Plugins.
+* Enhancement - Added a warning if the "Tested up to" value in the readme file exceeds the released version of WordPress.
+* Fix - Display a success message if no errors or warnings are found.
+* Fix - Made table results responsive.
+* Fix - Prevent proceeding to the next check if the Stable Tag value is set to `trunk`.
+* Fix - Allow runtime initialization even when only add-on checks are requested.
+* Fix - Fixed an SPDX warning for the `GPL version 3` license.
+* Fix - Prevent runtime checks in the CLI context when they cannot be used.
+
+= 1.1.0 =
+
+* Feature - New `Non_Blocking_Scripts_Check` (`non_blocking_scripts`) runtime check to warn about enqueued scripts that use neither `defer` nor `async`.
+* Enhancement - Changed the namespace of included checks.
+* Enhancement - Introduced severity levels for all errors and warnings.
+* Enhancement - CLI: Support checking a plugin from a path or URL.
+* Enhancement - Added short descriptions and URLs for each check.
+* Enhancement - Improved messaging in check results.
+* Enhancement - Updated code obfuscation check with more accurate results.
+* Enhancement - Updated plugin review check to flag missing input sanitization (`WordPress.Security.ValidatedSanitizedInput`).
+* Fix - Improve readme checks to exclude invalid files.
+* Fix - Only show edit link if files are actually editable.
 
 = 1.0.2 =
 

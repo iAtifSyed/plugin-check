@@ -32,12 +32,15 @@ class CLI_Runner extends Abstract_Check_Runner {
 	 * @return bool Returns true if is an CLI request for the plugin check else false.
 	 */
 	public static function is_plugin_check() {
+		if ( ! defined( 'WP_CLI' ) || ! WP_CLI ) {
+			return false;
+		}
+
 		if ( empty( $_SERVER['argv'] ) || 3 > count( $_SERVER['argv'] ) ) {
 			return false;
 		}
 
 		if (
-			'wp' === substr( $_SERVER['argv'][0], -2 ) &&
 			'plugin' === $_SERVER['argv'][1] &&
 			'check' === $_SERVER['argv'][2]
 		) {
@@ -153,5 +156,69 @@ class CLI_Runner extends Abstract_Check_Runner {
 		}
 
 		return $categories;
+	}
+
+	/**
+	 * Returns plugin slug parameter.
+	 *
+	 * @since 1.2.0
+	 *
+	 * @return string Plugin slug parameter.
+	 */
+	protected function get_slug_param() {
+		$slug = '';
+
+		foreach ( $_SERVER['argv'] as $value ) {
+			if ( false !== strpos( $value, '--slug=' ) ) {
+				$slug = str_replace( '--slug=', '', $value );
+				break;
+			}
+		}
+
+		return $slug;
+	}
+
+	/**
+	 * Initializes the runtime environment so that runtime checks can be run against a separate set of database tables.
+	 *
+	 * @since 1.3.0
+	 *
+	 * @return callable[] Array of cleanup functions to run after the process has completed.
+	 */
+	protected function initialize_runtime(): array {
+		/*
+		 * Since for WP-CLI all checks are run in a single process, we should set up the runtime environment (i.e.
+		 * install the separate database tables) as part of this step.
+		 * This way it runs before the regular runtime preparations, just like it does for the AJAX based flow, where
+		 * they are invoked in a separate request prior to the requests performing actual checks.
+		 */
+		$runtime_setup = new Runtime_Environment_Setup();
+		$runtime_setup->set_up();
+
+		$cleanup_functions   = parent::initialize_runtime();
+		$cleanup_functions[] = function () use ( $runtime_setup ) {
+			$runtime_setup->clean_up();
+		};
+
+		return $cleanup_functions;
+	}
+
+	/**
+	 * Checks whether the current environment allows for runtime checks to be used.
+	 *
+	 * @since 1.2.0
+	 *
+	 * @return bool True if runtime checks are allowed, false otherwise.
+	 */
+	protected function allow_runtime_checks(): bool {
+		/*
+		 * For WP-CLI, everything happens in one request. So if the runner was not initialized early, we won't be
+		 * able to set that up, since the object-cache.php drop-in would only become effective in subsequent requests.
+		 */
+		if ( ! $this->initialized_early ) {
+			return false;
+		}
+
+		return parent::allow_runtime_checks();
 	}
 }

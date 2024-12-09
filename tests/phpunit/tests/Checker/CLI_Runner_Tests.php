@@ -16,19 +16,38 @@ class CLI_Runner_Tests extends WP_UnitTestCase {
 
 	use With_Mock_Filesystem;
 
+	/**
+	 * Storage for preparation cleanups that need to be run after a test.
+	 *
+	 * @var array
+	 */
+	private $cleanups = array();
+
 	public function set_up() {
+		parent::set_up();
+
 		// Setup the mock filesystem so the Runtime_Environment_Setup works correctly within the CLI_Runner.
 		$this->set_up_mock_filesystem();
 	}
 
 	public function tear_down() {
-		// Force reset the database prefix after runner prepare method called.
-		global $wpdb, $table_prefix;
-		$wpdb->set_prefix( $table_prefix );
+		if ( count( $this->cleanups ) > 0 ) {
+			$this->cleanups = array_reverse( $this->cleanups );
+			foreach ( $this->cleanups as $cleanup ) {
+				$cleanup();
+			}
+			$this->cleanups = array();
+		}
 		parent::tear_down();
 	}
 
+	/**
+	 * @runInSeparateProcess
+	 * @preserveGlobalState disabled
+	 */
 	public function test_is_plugin_check_returns_true() {
+		define( 'WP_CLI', true );
+
 		$_SERVER['argv'] = array(
 			'wp',
 			'plugin',
@@ -72,8 +91,9 @@ class CLI_Runner_Tests extends WP_UnitTestCase {
 		$muplugins_loaded = $wp_actions['muplugins_loaded'];
 		unset( $wp_actions['muplugins_loaded'] );
 
-		$runner  = new CLI_Runner();
-		$cleanup = $runner->prepare();
+		$runner           = new CLI_Runner();
+		$cleanup          = $runner->prepare();
+		$this->cleanups[] = $cleanup;
 
 		$wp_actions['muplugins_loaded'] = $muplugins_loaded;
 
@@ -109,8 +129,9 @@ class CLI_Runner_Tests extends WP_UnitTestCase {
 			}
 		);
 
-		$runner  = new CLI_Runner();
-		$cleanup = $runner->prepare();
+		$runner           = new CLI_Runner();
+		$cleanup          = $runner->prepare();
+		$this->cleanups[] = $cleanup;
 
 		$this->assertIsCallable( $cleanup );
 
@@ -144,8 +165,10 @@ class CLI_Runner_Tests extends WP_UnitTestCase {
 			}
 		);
 
-		$runner = new CLI_Runner();
-		$runner->prepare();
+		$runner           = new CLI_Runner();
+		$cleanup          = $runner->prepare();
+		$this->cleanups[] = $cleanup;
+
 		$results = $runner->run();
 
 		$this->assertInstanceOf( Check_Result::class, $results );
@@ -171,8 +194,10 @@ class CLI_Runner_Tests extends WP_UnitTestCase {
 			}
 		);
 
-		$runner = new CLI_Runner();
-		$runner->prepare();
+		$runner           = new CLI_Runner();
+		$cleanup          = $runner->prepare();
+		$this->cleanups[] = $cleanup;
+
 		$results = $runner->run();
 
 		$this->assertInstanceOf( Check_Result::class, $results );
@@ -203,7 +228,9 @@ class CLI_Runner_Tests extends WP_UnitTestCase {
 
 		$runner->set_plugin( 'invalid-plugin' );
 
-		$runner->prepare();
+		$cleanup          = $runner->prepare();
+		$this->cleanups[] = $cleanup;
+
 		$runner->run();
 	}
 
@@ -230,7 +257,9 @@ class CLI_Runner_Tests extends WP_UnitTestCase {
 
 		$runner->set_check_slugs( array( 'runtime_check' ) );
 
-		$runner->prepare();
+		$cleanup          = $runner->prepare();
+		$this->cleanups[] = $cleanup;
+
 		$runner->run();
 	}
 }

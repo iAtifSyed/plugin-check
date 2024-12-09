@@ -6,6 +6,8 @@ build
 docs
 node_modules
 patches
+# Distributed via vendor/plugin-check/phpcs-sniffs instead
+/phpcs-sniffs/
 tests
 
 *.DS_Store
@@ -13,15 +15,17 @@ tests
 .distignore
 .editorconfig
 .eslintrc.js
+.gherkin-lintignore
+.gherkin-lintrc
 .gitattributes
 .gitignore
 .nvmrc
 .phpunit.result.cache
+.typos.toml
 .wp-env.json
 .wp-env.override.json
 behat.yml
 codecov.yml
-composer.json
 composer.lock
 CONTRIBUTING.md
 package.json

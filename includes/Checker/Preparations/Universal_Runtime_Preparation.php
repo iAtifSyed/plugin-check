@@ -56,16 +56,22 @@ class Universal_Runtime_Preparation implements Preparation {
 
 		if ( ! defined( 'WP_PLUGIN_CHECK_PLUGIN_DIR_PATH' ) ) {
 			$plugins_dir  = defined( 'WP_PLUGIN_DIR' ) ? WP_PLUGIN_DIR : WP_CONTENT_DIR . '/plugins';
-			$theme_folder = $plugins_dir . '/plugin-check/test-content/themes';
+			$theme_folder = $plugins_dir . '/plugin-check/runtime-content/themes';
 		} else {
-			$theme_folder = WP_PLUGIN_CHECK_PLUGIN_DIR_PATH . 'test-content/themes';
+			$theme_folder = WP_PLUGIN_CHECK_PLUGIN_DIR_PATH . 'runtime-content/themes';
 		}
+
+		$use_custom_db_tables_preparation = new Use_Custom_DB_Tables_Preparation();
+		$cleanup_functions[]              = $use_custom_db_tables_preparation->prepare();
 
 		$use_minimal_theme_preparation = new Use_Minimal_Theme_Preparation( 'wp-empty-theme', $theme_folder );
 		$cleanup_functions[]           = $use_minimal_theme_preparation->prepare();
 
 		$force_single_plugin_preparation = new Force_Single_Plugin_Preparation( $this->check_context->basename() );
 		$cleanup_functions[]             = $force_single_plugin_preparation->prepare();
+
+		// Revert order so that earlier preparations are cleaned up later.
+		$cleanup_functions = array_reverse( $cleanup_functions );
 
 		// Return the cleanup function.
 		return function () use ( $cleanup_functions ) {
