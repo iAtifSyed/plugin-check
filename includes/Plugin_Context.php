@@ -81,7 +81,7 @@ class Plugin_Context {
 		if ( ! empty( $slug ) ) {
 			$this->slug = $slug;
 		} else {
-			$this->slug = basename( dirname( $this->main_file ) );
+			$this->slug = basename( dirname( $this->main_file ), '.php' );
 		}
 	}
 
@@ -128,9 +128,9 @@ class Plugin_Context {
 	 */
 	public function path( $relative_path = '/' ) {
 		if ( is_dir( $this->main_file ) ) {
-			return trailingslashit( $this->main_file ) . ltrim( $relative_path, '/' );
+			return $this->main_file . '/' . ltrim( $relative_path, '/' );
 		} else {
-			return plugin_dir_path( $this->main_file ) . ltrim( $relative_path, '/' );
+			return dirname( $this->main_file ) . '/' . ltrim( $relative_path, '/' );
 		}
 	}
 
